@@ -28,9 +28,13 @@
             </div>
             
             <div class="header-actions">
-                <button id="themeToggle" class="btn-icon" title="Toggle Light/Dark Mode" aria-label="Toggle Theme">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
+                <label class="theme-switch" for="themeToggle" title="Toggle Light/Dark Mode">
+                    <input type="checkbox" id="themeToggle" aria-label="Toggle Theme">
+                    <span class="slider round">
+                        <i class="fa-solid fa-moon icon-dark"></i>
+                        <i class="fa-solid fa-sun icon-light"></i>
+                    </span>
+                </label>
                 <button id="exportCsvBtn" class="btn-icon" title="Export current view to CSV" aria-label="Export CSV">
                     <i class="fa-solid fa-file-csv"></i>
                 </button>

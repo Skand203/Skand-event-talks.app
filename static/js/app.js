@@ -54,28 +54,27 @@ document.addEventListener('DOMContentLoaded', () => {
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
     const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    const isLight = savedTheme === 'light' || (!savedTheme && prefersLight);
     
-    if (savedTheme === 'light' || (!savedTheme && prefersLight)) {
+    if (isLight) {
         appState.theme = 'light';
         document.body.classList.add('light-theme');
-        themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        if (themeToggle) themeToggle.checked = true;
     } else {
         appState.theme = 'dark';
         document.body.classList.remove('light-theme');
-        themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        if (themeToggle) themeToggle.checked = false;
     }
 }
 
 function toggleTheme() {
-    if (appState.theme === 'dark') {
+    if (themeToggle.checked) {
         appState.theme = 'light';
         document.body.classList.add('light-theme');
-        themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
         localStorage.setItem('theme', 'light');
     } else {
         appState.theme = 'dark';
         document.body.classList.remove('light-theme');
-        themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
         localStorage.setItem('theme', 'dark');
     }
 }
@@ -287,7 +286,7 @@ function renderFeed() {
 // Setup Events
 function setupEventListeners() {
     // Theme
-    themeToggle.addEventListener('click', toggleTheme);
+    themeToggle.addEventListener('change', toggleTheme);
     
     // Refresh
     refreshBtn.addEventListener('click', fetchReleaseNotes);
