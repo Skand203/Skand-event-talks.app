@@ -248,6 +248,9 @@ function renderFeed() {
                         <span class="category-badge ${catClass}">${update.category}</span>
                     </div>
                     <div class="update-actions">
+                        <button class="btn-copy-single" data-id="${updateId}" title="Copy update to clipboard">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
                         <button class="btn-tweet-single" data-id="${updateId}" title="Compose Tweet for this update">
                             <i class="fa-brands fa-x-twitter"></i>
                         </button>
@@ -333,6 +336,14 @@ function setupEventListeners() {
             return;
         }
         
+        // 1.5. Copy single button click
+        const copyBtn = e.target.closest('.btn-copy-single');
+        if (copyBtn) {
+            const updateItem = copyBtn.closest('.update-item');
+            copyToClipboard(updateItem, copyBtn);
+            return;
+        }
+        
         // 2. Checkbox selection click
         const checkbox = e.target.closest('.update-select-checkbox');
         if (checkbox) {
@@ -341,9 +352,9 @@ function setupEventListeners() {
             return;
         }
         
-        // 3. Row click toggles selection (except if clicking on links or elements inside body)
+        // 3. Row click toggles selection (except if clicking on links or elements inside body or actions)
         const updateItem = e.target.closest('.update-item');
-        if (updateItem && !e.target.closest('a') && !e.target.closest('pre') && !e.target.closest('.btn-tweet-single')) {
+        if (updateItem && !e.target.closest('a') && !e.target.closest('pre') && !e.target.closest('.btn-tweet-single') && !e.target.closest('.btn-copy-single')) {
             const cb = updateItem.querySelector('.update-select-checkbox');
             cb.checked = !cb.checked;
             toggleUpdateSelection(updateItem, cb.checked);
@@ -353,6 +364,12 @@ function setupEventListeners() {
     // Selection Banner actions
     clearSelectionBtn.addEventListener('click', clearSelection);
     tweetSelectedBtn.addEventListener('click', openTweetModalMulti);
+    
+    // Export CSV action
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', exportToCsv);
+    }
     
     // Modal events
     closeModal.addEventListener('click', closeTweetModal);
@@ -525,4 +542,74 @@ function executeTweetIntent() {
     
     window.open(twitterIntentUrl, '_blank', 'noopener,noreferrer');
     closeTweetModal();
+}
+
+// Copy update details to clipboard
+async function copyToClipboard(updateItem, button) {
+    const date = updateItem.dataset.date;
+    const category = updateItem.dataset.category;
+    const textContent = updateItem.dataset.text;
+    const link = updateItem.dataset.link;
+    
+    const formattedText = `BigQuery Update [${date}] | [${category}]:\n${textContent}\n\nRead more: ${link}`;
+    
+    try {
+        await navigator.clipboard.writeText(formattedText);
+        
+        // Success animation feedback
+        button.classList.add('success');
+        const icon = button.querySelector('i');
+        icon.className = 'fa-solid fa-check';
+        
+        setTimeout(() => {
+            button.classList.remove('success');
+            icon.className = 'fa-regular fa-copy';
+        }, 1500);
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+        alert('Could not copy text to clipboard. Please select and copy manually.');
+    }
+}
+
+// Export currently filtered list to CSV
+function exportToCsv() {
+    const visibleCards = document.querySelectorAll('.update-item');
+    if (visibleCards.length === 0) {
+        alert("No visible updates to export.");
+        return;
+    }
+    
+    let csvRows = [];
+    // Header
+    csvRows.push(['Date', 'Category', 'Update Content', 'Source Link'].map(escapeCsvValue).join(','));
+    
+    visibleCards.forEach(card => {
+        const date = card.dataset.date;
+        const category = card.dataset.category;
+        const text = card.dataset.text;
+        const link = card.dataset.link;
+        
+        csvRows.push([date, category, text, link].map(escapeCsvValue).join(','));
+    });
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `bigquery_release_notes_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Helper to escape CSV values according to RFC 4180
+function escapeCsvValue(val) {
+    if (val === undefined || val === null) return '';
+    let stringVal = String(val);
+    if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+        stringVal = stringVal.replace(/"/g, '""');
+        return `"${stringVal}"`;
+    }
+    return stringVal;
 }

@@ -617,7 +617,7 @@ body.light-theme .update-item:hover {
     gap: 8px;
 }
 
-.btn-tweet-single {
+.btn-tweet-single, .btn-copy-single {
     width: 34px;
     height: 34px;
     background-color: var(--bg-tertiary);
@@ -633,6 +633,20 @@ body.light-theme .update-item:hover {
     border-color: #1d9bf0;
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(29, 155, 240, 0.3);
+}
+
+.btn-copy-single:hover {
+    background-color: var(--border-hover);
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    transform: scale(1.1);
+}
+
+.btn-copy-single.success {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    border-color: #10b981 !important;
+    transform: scale(1.1);
 }
 
 /* Nested HTML Styles Inside Release Notes */
