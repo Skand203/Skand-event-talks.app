@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Radar</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-cube"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>BigQuery <span>Release Radar</span></h1>
+                    <p class="feed-status" id="feedStatus">Loading release notes...</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button id="themeToggle" class="btn-icon" title="Toggle Light/Dark Mode" aria-label="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <button id="refreshBtn" class="btn-primary">
+                    <span class="btn-text">Refresh</span>
+                    <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Search and Filters Section -->
+        <section class="filters-section">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Search updates by keyword (e.g. partition, JSON, query)..." aria-label="Search updates">
+                <button id="clearSearch" class="clear-search-btn" style="display: none;" title="Clear Search" aria-label="Clear Search">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="filter-categories" id="filterCategories">
+                <button class="filter-chip active" data-category="all">
+                    All <span class="count" id="count-all">0</span>
+                </button>
+                <button class="filter-chip" data-category="Feature">
+                    <span class="dot feat-dot"></span> Features <span class="count" id="count-feature">0</span>
+                </button>
+                <button class="filter-chip" data-category="Fix">
+                    <span class="dot fix-dot"></span> Fixes <span class="count" id="count-fix">0</span>
+                </button>
+                <button class="filter-chip" data-category="Changed">
+                    <span class="dot change-dot"></span> Changes <span class="count" id="count-changed">0</span>
+                </button>
+                <button class="filter-chip" data-category="Notice">
+                    <span class="dot notice-dot"></span> Notices <span class="count" id="count-notice">0</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Feed -->
+        <main class="feed-main">
+            <!-- Loading state -->
+            <div id="loadingState" class="state-container">
+                <div class="spinner-large"></div>
+                <h3>Fetching release notes</h3>
+                <p>Retrieving the latest updates from Google Cloud...</p>
+            </div>
+
+            <!-- Error state -->
+            <div id="errorState" class="state-container hidden">
+                <div class="error-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3>Failed to load feed</h3>
+                <p id="errorMessage">Something went wrong while retrieving updates.</p>
+                <button id="retryBtn" class="btn-secondary">Try Again</button>
+            </div>
+
+            <!-- Empty state -->
+            <div id="emptyState" class="state-container hidden">
+                <div class="empty-icon">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <h3>No updates found</h3>
+                <p>Try adjusting your search query or filter criteria.</p>
+            </div>
+
+            <!-- Feed Content -->
+            <div id="feedContent" class="feed-grid hidden">
+                <!-- Grouped release notes render here -->
+            </div>
+        </main>
+        
+        <!-- Multi-select Tweet Floating Banner -->
+        <div id="selectionBanner" class="selection-banner hidden">
+            <div class="banner-content">
+                <span class="badge" id="selectedCount">0</span>
+                <span class="banner-text">update(s) selected</span>
+            </div>
+            <div class="banner-actions">
+                <button id="clearSelectionBtn" class="btn-text-only">Clear Selection</button>
+                <button id="tweetSelectedBtn" class="btn-accent">
+                    <i class="fa-brands fa-x-twitter"></i>
+                    <span>Tweet Selected</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>BigQuery Release Radar &copy; 2026. Data sourced from the official <a href="https://docs.cloud.google.com/feeds/bigquery-release-notes.xml" target="_blank" rel="noopener noreferrer">Google Cloud Feed</a>.</p>
+        </footer>
+    </div>
+
+    <!-- Tweet Composer Modal -->
+    <div id="tweetModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-brands fa-x-twitter"></i> Compose Tweet</h3>
+                <button id="closeModal" class="btn-close" title="Close Modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction">Edit your post before sharing on X (Twitter). The link to the source notes will be automatically appended.</p>
+                <div class="tweet-textarea-wrapper">
+                    <textarea id="tweetTextarea" rows="6" placeholder="What's happening?"></textarea>
+                    <div class="tweet-link-preview">
+                        <i class="fa-solid fa-link"></i>
+                        <span id="tweetLinkUrl">https://docs.cloud.google.com/bigquery/docs/release-notes...</span>
+                    </div>
+                </div>
+                <div class="modal-footer-info">
+                    <div class="char-counter" id="charCounter">
+                        <span id="charCountCurrent">0</span>/280
+                    </div>
+                    <div class="character-progress">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelTweet" class="btn-secondary">Cancel</button>
+                <button id="submitTweet" class="btn-accent">
+                    <span>Tweet on X</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom App JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
