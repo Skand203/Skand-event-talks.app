@@ -77,10 +77,27 @@
         <!-- Main Feed -->
         <main class="feed-main">
             <!-- Loading state -->
-            <div id="loadingState" class="state-container">
-                <div class="spinner-large"></div>
-                <h3>Fetching release notes</h3>
-                <p>Retrieving the latest updates from Google Cloud...</p>
+            <div id="loadingState" class="state-container loading-skeleton-container">
+                <div class="skeleton-header"></div>
+                <div class="skeleton-feed">
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-header">
+                            <div class="skeleton-circle"></div>
+                            <div class="skeleton-badge"></div>
+                        </div>
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line long"></div>
+                        <div class="skeleton-line medium"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-header">
+                            <div class="skeleton-circle"></div>
+                            <div class="skeleton-badge"></div>
+                        </div>
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line long"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Error state -->

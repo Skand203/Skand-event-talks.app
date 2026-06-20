@@ -80,7 +80,7 @@ function toggleTheme() {
 }
 
 // Fetch Release Notes
-async function fetchReleaseNotes() {
+async function fetchReleaseNotes(isManual = false) {
     if (appState.isLoading) return;
     
     appState.isLoading = true;
@@ -116,6 +116,10 @@ async function fetchReleaseNotes() {
         renderFeed();
         updateCategoryCounts();
         
+        if (isManual) {
+            showToast("Release notes refreshed successfully!", "success");
+        }
+        
     } catch (error) {
         console.error("Error fetching release notes:", error);
         errorMessage.textContent = error.message || "Could not retrieve feed data. Make sure you are connected to the internet.";
@@ -124,6 +128,7 @@ async function fetchReleaseNotes() {
             <i class="fa-solid fa-circle-xmark" style="color: #f43f5e;"></i>
             Fetch failed
         `;
+        showToast(error.message || "Failed to refresh release notes.", "error");
     } finally {
         appState.isLoading = false;
         refreshBtn.disabled = false;
@@ -289,8 +294,8 @@ function setupEventListeners() {
     themeToggle.addEventListener('change', toggleTheme);
     
     // Refresh
-    refreshBtn.addEventListener('click', fetchReleaseNotes);
-    retryBtn.addEventListener('click', fetchReleaseNotes);
+    refreshBtn.addEventListener('click', () => fetchReleaseNotes(true));
+    retryBtn.addEventListener('click', () => fetchReleaseNotes(true));
     
     // Search
     searchInput.addEventListener('input', (e) => {
@@ -564,9 +569,11 @@ async function copyToClipboard(updateItem, button) {
             button.classList.remove('success');
             icon.className = 'fa-regular fa-copy';
         }, 1500);
+        
+        showToast(`Copied ${category} update to clipboard!`, "success");
     } catch (err) {
         console.error('Failed to copy text: ', err);
-        alert('Could not copy text to clipboard. Please select and copy manually.');
+        showToast('Could not copy text to clipboard.', "error");
     }
 }
 
@@ -574,7 +581,7 @@ async function copyToClipboard(updateItem, button) {
 function exportToCsv() {
     const visibleCards = document.querySelectorAll('.update-item');
     if (visibleCards.length === 0) {
-        alert("No visible updates to export.");
+        showToast("No visible updates to export.", "info");
         return;
     }
     
@@ -600,6 +607,8 @@ function exportToCsv() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    showToast(`Exported ${visibleCards.length} updates to CSV!`, "success");
 }
 
 // Helper to escape CSV values according to RFC 4180
@@ -611,4 +620,41 @@ function escapeCsvValue(val) {
         return `"${stringVal}"`;
     }
     return stringVal;
+}
+
+// Display a toast notification
+function showToast(message, type = 'success') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    let iconHtml = '<i class="fa-solid fa-circle-check toast-icon"></i>';
+    if (type === 'error') {
+        iconHtml = '<i class="fa-solid fa-circle-exclamation toast-icon"></i>';
+    } else if (type === 'info') {
+        iconHtml = '<i class="fa-solid fa-circle-info toast-icon"></i>';
+    }
+    
+    toast.innerHTML = `
+        ${iconHtml}
+        <div class="toast-message">${message}</div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger slide-in
+    setTimeout(() => toast.classList.add('visible'), 50);
+    
+    // Auto dismiss after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 400);
+    }, 3000);
 }
